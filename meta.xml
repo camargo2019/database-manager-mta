@@ -1,0 +1,8 @@
+<meta>
+    <info author="Gabriel Camargo <git@camargo2019>"
+          version="1.0.0" name="Database Manager"
+          description="Realiza um gerenciamento mais simples do banco de dados, sem a necessidade de executar dbExec ou dbPoll a cada vez. Ele carrega tudo em uma tabela e salva automaticamente após o encerramento do resource."
+          type="script" />
+    <script src='config.lua' type='shared' />
+    <script src='database.lua' type='server' />
+</meta>
