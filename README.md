@@ -44,6 +44,12 @@ Irá excluir o registro correspondente ao índice informado.
 
 **Select and Delete:**
 ```lua
-_CMR.SelectAndDelete("Tabela", { cmapo = "valor" });
+_CMR.SelectAndDelete("Tabela", { campo = "valor" });
 ```
 Irá excluir apenas o primeiro registro encontrado.
+
+**Get All Data:**
+```lua
+_CMR.GetAllData("Tabela");
+```
+Irá obter todos os registros na tabela informada.
