@@ -78,10 +78,15 @@ _CMR.LoadData = function(event)
                         v.id = i + Offset;
                         _CMR.Data[tableName].Values[v.id] = v;
                     end
+
+                    if TotalPages > 100 then
+                        _CMR.Wait(100);
+                    end
                 end
 
                 _CMR.Data[tableName].NextId = table.getn(_CMR.Data[tableName].Values) + 1;
             end
+
         end
 
         if event then
@@ -93,28 +98,44 @@ end
 _CMR.SaveData = function(event)
     _CMR.CreateThread(function()
         for tableName, tableValues in pairs(_CMR.Data) do
-            dbExec(_CMR.Connection, string.format("DELETE FROM %s", tableName));
+            dbExec(_CMR.Connection, string.format("DELETE FROM %s", tableName))
 
-            local valueInsert = {};
-            local valuesKeys = {};
+            local columnNames = {}
             for _, c in pairs(tableValues.Columns) do
-                table.insert(valueInsert, c.name);
-                table.insert(valuesKeys, "?");
+                table.insert(columnNames, c.name)
             end
 
-            local Query = string.format("INSERT INTO %s(%s) VALUES (%s);", tableName, table.concat(valueInsert, ", "), table.concat(valuesKeys, ", "));
+            local batchSize = 500
+            local totalValues = #tableValues.Values
 
-            for _, v in pairs(tableValues.Values) do
-                local ValuesRegister = {};
-                for _, c in pairs(tableValues.Columns) do
-                    table.insert(ValuesRegister, v[c.name]);
+            for i = 1, totalValues, batchSize do
+                local valuesList = {}
+                local batch = {}
+
+                for key = i, math.min(i + batchSize - 1, totalValues) do
+                    local valueSet = {}
+
+                    if tableValues.Values[key] then
+                        for _, c in pairs(tableValues.Columns) do
+                            table.insert(valueSet, "?")
+                            table.insert(batch, tableValues.Values[key][c.name])
+                        end
+
+                        table.insert(valuesList, "("..table.concat(valueSet, ", ")..")")
+                    end
                 end
-                dbExec(_CMR.Connection, Query, unpack(ValuesRegister));
+
+                dbExec(_CMR.Connection, string.format(
+                    "INSERT INTO %s(%s) VALUES %s;",
+                    tableName,
+                    table.concat(columnNames, ", "),
+                    table.concat(valuesList, ", ")
+                ), unpack(batch))
             end
         end
 
         if event then
-            event();
+            event()
         end
     end)
 end
@@ -219,6 +240,17 @@ _CMR.SelectAndDelete = function(tableName, search)
     end
 
     return _CMR.Delete(tableName, Data[1].id);
+end
+
+_CMR.Wait = function(milliseconds)
+    local event = coroutine.running()
+
+    local resume = function()
+        coroutine.resume(event)
+    end
+
+    setTimer(resume, milliseconds, 1)
+    coroutine.yield()
 end
 
 addEventHandler("onResourceStart", getResourceRootElement(), function()
