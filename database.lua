@@ -211,8 +211,18 @@ end
 
 _CMR.Delete = function(tableName, index)
     _CMR.CheckTable(tableName);
+    local Values = {}
 
-    _CMR.Data[tableName].Values[index] = nil;
+    for _, value in pairs(_CMR.Data[tableName].Values) do
+        if value.id ~= index then
+            value.id = table.getn(Values) + 1
+            table.insert(Values, value)
+        end
+    end
+
+    _CMR.Data[tableName].Values = Values
+    _CMR.Data[tableName].NextId = table.getn(_CMR.Data[tableName].Values) + 1
+
     return true
 end
 
